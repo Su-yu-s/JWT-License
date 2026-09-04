@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 - iK 授权管理后台</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body class="login-body">
+  <div class="login-container">
+    <div class="login-brand">
+      <div class="brand-mark" style="width:48px;height:48px;border-radius:10px;font-size:16px;background:var(--clr-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">iK</div>
+      <div class="login-brand-text">
+        <strong>授权管理后台</strong>
+        <small>License Administration</small>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <h2>欢迎回来</h2>
+      <p>请登录您的管理员账户以继续</p>
+
+      <div class="login-alert" id="errorBox" hidden></div>
+
+      <form class="login-form" id="loginForm" onsubmit="return false;">
+        <div class="form-field">
+          <label class="form-label" for="email">用户名</label>
+          <input class="form-input" type="text" id="email" autocomplete="username" placeholder="admin@example.com">
+          <span class="field-error" id="emailError"></span>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="password">密码</label>
+          <input class="form-input" type="password" id="password" autocomplete="current-password" placeholder="请输入密码">
+          <span class="field-error" id="passwordError"></span>
+          <span class="field-error" id="capsWarning" style="color:var(--clr-warning);">⚠ 大写锁定已开启</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginBtn" style="min-height:44px;font-size:15px;">
+          <span class="btn-text">登 录</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    // 通过服务端验证 token 是否有效，避免过期 token 导致的重定向死循环
+    // 注意：不能使用 apiGet()，因为其 401 处理器会再次跳转 login.html 造成死循环
+    (function () {
+      var token = window.getToken();
+      if (!token) return; // 无 token，直接显示登录表单
+      fetch('/api/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(function (res) {
+          if (res.ok) return res.json();
+          throw new Error('token invalid');
+        })
+        .then(function () {
+          // token 有效，直接跳转管理后台
+          window.location.href = 'admin.html';
+        })
+        .catch(function () {
+          // token 无效或过期，清除残留 token，显示登录表单
+          window.clearToken();
+        });
+    })();
+  </script>
+  <script>
+    (function () {
+      var form = document.getElementById('loginForm');
+      var btn = document.getElementById('loginBtn');
+      var btnText = btn.querySelector('.btn-text');
+      var errorBox = document.getElementById('errorBox');
+      var usernameInput = document.getElementById('email');
+      var passwordInput = document.getElementById('password');
+      var emailError = document.getElementById('emailError');
+      var passwordError = document.getElementById('passwordError');
+      var capsWarning = document.getElementById('capsWarning');
+
+      // 自动聚焦用户名输入框
+      usernameInput.focus();
+
+      // ---- 工具函数 ----
+
+      // 清空所有错误状态
+      function clearErrors() {
+        errorBox.hidden = true;
+        errorBox.innerHTML = '';
+        usernameInput.classList.remove('input-error');
+        passwordInput.classList.remove('input-error');
+        emailError.classList.remove('visible');
+        emailError.textContent = '';
+        passwordError.classList.remove('visible');
+        passwordError.textContent = '';
+      }
+
+      // 显示顶部错误提示（带图标）
+      function showError(message) {
+        errorBox.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+          + '<span>' + escapeHtml(message) + '</span>';
+        errorBox.hidden = false;
+        // 重新触发抖动动画
+        errorBox.style.animation = 'none';
+        errorBox.offsetHeight; // 触发回流
+        errorBox.style.animation = 'shake 0.4s ease';
+      }
+
+      // 标记输入框错误
+      function markFieldError(input, errorEl, message) {
+        input.classList.add('input-error');
+        if (errorEl) {
+          errorEl.textContent = message;
+          errorEl.classList.add('visible');
+        }
+      }
+
+      // HTML 转义
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // 提取后端返回的可读错误消息
+      function extractErrorMessage(err) {
+        if (!err) return '登录失败，请检查网络连接';
+        // 优先使用 err.message
+        if (err.message && typeof err.message === 'string') {
+          // 过滤掉 common.js 自动生成的 "登录已过期" 消息（登录页上不友好）
+          if (err.message.indexOf('登录已过期') === 0) {
+            return '登录失败，请重试';
+          }
+          return err.message;
+        }
+        return '服务器异常，请稍后重试';
+      }
+
+      // 设置按钮加载状态
+      function setLoading(loading) {
+        if (loading) {
+          btn.disabled = true;
+          btn.classList.add('btn-loading');
+          btnText.textContent = '登录中...';
+        } else {
+          btn.disabled = false;
+          btn.classList.remove('btn-loading');
+          btnText.textContent = '登 录';
+        }
+      }
+
+      // ---- 大写锁定检测 ----
+      passwordInput.addEventListener('keydown', function (e) {
+        if (e.getModifierState && e.getModifierState('CapsLock')) {
+          capsWarning.classList.add('visible');
+        } else {
+          capsWarning.classList.remove('visible');
+        }
+      });
+      passwordInput.addEventListener('blur', function () {
+        capsWarning.classList.remove('visible');
+      });
+
+      // ---- 输入时清除错误状态 ----
+      usernameInput.addEventListener('input', function () {
+        usernameInput.classList.remove('input-error');
+        emailError.classList.remove('visible');
+      });
+      passwordInput.addEventListener('input', function () {
+        passwordInput.classList.remove('input-error');
+        passwordError.classList.remove('visible');
+      });
+
+      // ---- 表单提交 ----
+      form.addEventListener('submit', function () {
+        var username = usernameInput.value.trim();
+        var password = passwordInput.value;
+        var hasError = false;
+
+        clearErrors();
+
+        // 逐字段校验
+        if (!username) {
+          markFieldError(usernameInput, emailError, '请输入用户名');
+          hasError = true;
+        }
+        if (!password) {
+          markFieldError(passwordInput, passwordError, '请输入密码');
+          hasError = true;
+        }
+        if (hasError) {
+          showError('请填写完整的登录信息');
+          usernameInput.focus();
+          return;
+        }
+
+        setLoading(true);
+
+        apiPost('/auth/login', { username: username, password: password })
+          .then(function (res) {
+            var data = res.data || {};
+            if (!data.token) {
+              showError('登录响应异常，请重试');
+              setLoading(false);
+              return;
+            }
+            window.setToken(data.token);
+            document.cookie = 'jwt-admin-token=' + data.token + '; path=/; Max-Age=86400';
+            window.setUserInfo({ username: data.username, role: data.role });
+            window.location.href = 'admin.html?token=' + encodeURIComponent(data.token);
+          })
+          .catch(function (err) {
+            showError(extractErrorMessage(err));
+            setLoading(false);
+            // 聚焦到用户名输入框方便重新输入
+            usernameInput.focus();
+            usernameInput.select();
+          });
+      });
+
+      // ---- 回车键提交 ----
+      passwordInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
+      });
+    })();
+  </script>
+</body>
+</html>

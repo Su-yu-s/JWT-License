@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Background circle -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0e7ff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Outer glow circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#bgGrad)" opacity="0.15"/>
+  <circle cx="100" cy="100" r="75" fill="url(#bgGrad)" opacity="0.25"/>
+  
+  <!-- Shield shape -->
+  <path d="M100,25 L155,50 L155,100 Q155,145 100,170 Q45,145 45,100 L45,50 Z" 
+        fill="url(#shieldGrad)" stroke="#3b82f6" stroke-width="2" filter="url(#glow)"/>
+  
+  <!-- Lock icon inside shield -->
+  <rect x="85" y="80" width="30" height="24" rx="4" fill="#3b82f6"/>
+  <path d="M90,80 L90,70 Q90,62 100,62 Q110,62 110,70 L110,80" 
+        fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="100" cy="91" r="3" fill="#ffffff"/>
+  <line x1="100" y1="94" x2="100" y2="100" stroke="#ffffff" stroke-width="2"/>
+  
+  <!-- JWT text -->
+  <text x="100" y="125" text-anchor="middle" font-family="Segoe UI, sans-serif" 
+        font-size="14" font-weight="700" fill="#3b82f6" letter-spacing="3">JWT</text>
+</svg>

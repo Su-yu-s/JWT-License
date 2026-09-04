@@ -1,0 +1,46 @@
+/* ===== Login Page ===== */
+body.login-page{
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#334155 100%);
+  display:grid;place-items:center;min-height:100vh;padding:20px;
+}
+.login-wrap{display:grid;grid-template-columns:1fr 1fr;max-width:860px;width:100%;gap:0;overflow:hidden;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.login-left{
+  padding:48px 40px;display:flex;flex-direction:column;justify-content:center;
+  background:#fff;
+}
+.login-left .brand{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.login-left .brand .logo{
+  width:42px;height:42px;border-radius:10px;
+  background:linear-gradient(135deg,#4a6cf7,#6366f1);
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;
+}
+.login-left .brand h1{font-size:20px;font-weight:800;color:#1a1a2e}
+.login-left .brand p{font-size:13px;color:#5f6368;margin-top:2px}
+.login-form{display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.login-form .field{display:flex;flex-direction:column;gap:5px}
+.login-form .field label{font-size:12.5px;font-weight:600;color:#5f6368}
+.login-form .field input{
+  padding:10px 14px;border:1px solid #dfe1e6;border-radius:8px;font-size:14px;
+  transition:border-color .2s,box-shadow .2s;outline:none;
+}
+.login-form .field input:focus{border-color:#4a6cf7;box-shadow:0 0 0 3px rgba(74,108,247,.1)}
+.login-form .btn{
+  padding:11px;border-radius:8px;background:#4a6cf7;color:#fff;font-size:14px;font-weight:700;
+  transition:background .2s,box-shadow .2s;margin-top:4px;
+}
+.login-form .btn:hover{background:#3b5de7;box-shadow:0 4px 16px rgba(74,108,247,.3)}
+.login-error{padding:10px 14px;border-radius:8px;background:rgba(239,68,68,.08);color:#dc2626;font-size:13px;font-weight:600}
+.login-right{
+  background:linear-gradient(135deg,#4a6cf7,#6366f1);color:#fff;padding:48px 40px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.login-right h2{font-size:24px;font-weight:800;margin-bottom:12px}
+.login-right p{font-size:14px;opacity:.85;line-height:1.7}
+.login-right .features{margin-top:24px;display:flex;flex-direction:column;gap:12px}
+.login-right .feat{display:flex;align-items:center;gap:10px;font-size:13.5px;opacity:.9}
+.login-right .feat .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5);flex-shrink:0}
+
+@media(max-width:768px){
+  .login-wrap{grid-template-columns:1fr}
+  .login-right{display:none}
+}

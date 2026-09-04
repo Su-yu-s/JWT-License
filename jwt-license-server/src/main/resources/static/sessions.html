@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>设备会话 - iK 授权管理后台</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-mark">iK</span>
+        <div class="brand-text">
+          <strong>授权管理后台</strong>
+          <small>License Administration</small>
+        </div>
+      </div>
+      <nav class="nav-section">
+        <div class="nav-label">导航</div>
+        <div class="main-nav">
+          <a href="admin.html" class="nav-item"><svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="6" height="6" rx="1"/><rect x="10" y="10" width="6" height="6" rx="1"/></svg>总览</a>
+          <a href="products.html" class="nav-item"><svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="14" height="12" rx="2"/><line x1="2" y1="7" x2="16" y2="7"/></svg>产品管理</a>
+          <a href="keys.html" class="nav-item"><svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="9" r="4"/><line x1="9.8" y1="11.8" x2="14" y2="16"/><line x1="12" y1="14" x2="15" y2="14"/></svg>授权 Key</a>
+          <a href="sessions.html" class="nav-item active"><svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="12" height="14" rx="2"/><line x1="3" y1="5" x2="15" y2="5"/><circle cx="9" cy="10" r="2"/></svg>设备会话</a>
+          <a href="audit.html" class="nav-item"><svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h12v12H3z"/><path d="M6 6h6M6 9h4M6 12h2"/></svg>审计日志</a>
+        </div>
+      </nav>
+      <div style="padding-top:8px;border-top:1px solid var(--clr-border);">
+        <a href="login.html" class="nav-item" style="color:var(--clr-text-tertiary);" onclick="window.clearToken(); return true;">退出登录</a>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="btn btn-ghost btn-sm" id="menuToggle" type="button">菜单</button>
+          <div class="breadcrumb"><span>iK 授权管理</span><span class="breadcrumb-sep">/</span><span>设备会话</span></div>
+        </div>
+        <div class="topbar-right">
+          <span class="status-pill" style="font-size:11px;"><span class="status-dot"></span>运行中</span>
+          <div class="user-pill"><span class="user-avatar">A</span><span id="usernameDisplay">admin</span></div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="page-header" style="justify-content:space-between;">
+          <div>
+            <h1>设备会话</h1>
+            <p>查看当前绑定设备、在线检查时间和 JWT 过期时间。</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="loadSessions()">
+              <svg style="width:14px;height:14px;" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 0111.47-2.4"/><path d="M14 8a6 6 0 01-11.47 2.4"/><polyline points="2 4 2 12 10 12"/><polyline points="14 12 14 4 6 4"/></svg>
+              刷新
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="clearExpired()">清理超时会话</button>
+          </div>
+        </div>
+
+        <!-- Sessions Table -->
+        <div class="card">
+          <div class="card-header">
+            <div><h2>会话列表</h2><p>每个授权 Key 同一时间最多只有一个活跃会话。</p></div>
+            <div style="position:relative;">
+              <input class="form-input" id="sessionSearchInput" type="text" placeholder="搜索 Key / 产品..." style="width:200px;padding-right:32px;font-size:13px;" oninput="filterSessions()">
+              <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;pointer-events:none;" viewBox="0 0 16 16" fill="none" stroke="#999" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><line x1="11" y1="11" x2="14" y2="14"/></svg>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Key</th><th>产品 ID</th><th>机器哈希</th><th>SDK 版本</th><th>状态</th><th>最近在线</th><th>JWT 过期</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="sessionTableBody">
+                <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--clr-text-tertiary);">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
+
+  <script src="js/common.js"></script>
+  <script>
+    // 校验登录状态（common.js 已加载，isLoggedIn 可用）
+    if (!window.isLoggedIn()) { window.location.href = 'login.html'; }
+  </script>
+  <script>
+    (function () {
+      var info = window.getUserInfo();
+      if (info) { document.getElementById('usernameDisplay').textContent = info.username || 'admin'; }
+    })();
+
+    var sessionData = [];
+
+    (function () {
+      loadSessions();
+    })();
+
+    function loadSessions() {
+      apiGet('/sessions', { page: 1, size: 50 })
+        .then(function (res) {
+          sessionData = (res.data && res.data.records) || [];
+          applySessionFilters();
+        })
+        .catch(function (err) {
+          document.getElementById('sessionTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--clr-danger);">加载失败: ' + escapeHtml(err.message) + '</td></tr>';
+        });
+    }
+
+    function applySessionFilters() {
+      var keyword = (document.getElementById('sessionSearchInput').value || '').trim().toLowerCase();
+      var filtered = sessionData;
+      if (keyword) {
+        filtered = filtered.filter(function (s) {
+          return (s.licenseKeyId || '').toLowerCase().indexOf(keyword) !== -1
+            || (s.productId || '').toLowerCase().indexOf(keyword) !== -1
+            || (s.machineHash || '').toLowerCase().indexOf(keyword) !== -1;
+        });
+      }
+      renderSessionTable(filtered);
+    }
+
+    function filterSessions() {
+      applySessionFilters();
+    }
+
+    function renderSessionTable(sessions) {
+      var tbody = document.getElementById('sessionTableBody');
+      if (sessions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--clr-text-tertiary);">暂无会话</td></tr>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < sessions.length; i++) {
+        var s = sessions[i];
+        var hash = s.machineHash || '';
+        var shortHash = hash.length > 12 ? hash.substring(0, 12) + '..' : hash;
+        var statusClass = s.status === 1 ? 'badge-active'
+          : s.status === 0 ? 'badge-danger'
+          : s.status === 2 ? 'badge-expired' : 'badge-info';
+        var statusText = s.status === 1 ? '活跃'
+          : s.status === 0 ? '已撤销'
+          : s.status === 2 ? '超时' : '未知';
+
+        html += '<tr>'
+          + '<td><code title="' + escapeHtml(s.licenseKeyId) + '">' + escapeHtml(s.licenseKeyId || '-') + '</code></td>'
+          + '<td><code>' + escapeHtml(s.productId) + '</code></td>'
+          + '<td><code title="' + escapeHtml(hash) + '">' + escapeHtml(shortHash) + '</code></td>'
+          + '<td class="text-mono">' + (s.sdkVersion || '&mdash;') + '</td>'
+          + '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>'
+          + '<td class="text-mono">' + formatDateTime(s.lastOnlineAt) + '</td>'
+          + '<td class="text-mono">' + formatDateTime(s.jwtExpiresAt) + '</td>'
+          + '<td>'
+          + (s.status === 1
+            ? '<button class="btn btn-sm" style="color:var(--clr-danger);" onclick="revokeSession(\'' + escapeHtml(s.id) + '\')">踢下线</button>'
+            : '<span class="text-muted">&mdash;</span>')
+          + '</td></tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    function revokeSession(id) {
+      if (!window.confirmAction('确认将该设备踢下线？该设备下次激活时需要重新验证授权。')) return;
+      apiPost('/sessions/' + id + '/revoke')
+        .then(function () {
+          window.toast('会话已撤销');
+          loadSessions();
+        })
+        .catch(function (err) { window.toast(err.message, 'error'); });
+    }
+
+    function clearExpired() {
+      if (!window.confirmAction('确认清理所有超时会话？')) return;
+      apiDelete('/sessions/expired')
+        .then(function (res) {
+          var count = (res.data && res.data.cleared) ? res.data.cleared : 0;
+          window.toast('已清理 ' + count + ' 个超时会话');
+          loadSessions();
+        })
+        .catch(function (err) { window.toast(err.message, 'error'); });
+    }
+
+    function formatDateTime(d) {
+      if (!d) return '&mdash;';
+      return d.replace('T', ' ').substring(0, 19);
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>

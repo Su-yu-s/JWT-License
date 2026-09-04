@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API 文档 - iK 授权管理后台</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <button class="menu-toggle" id="menuToggle" type="button" aria-label="打开导航菜单">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="overlay" id="overlay" hidden></div>
+
+  <aside class="sidebar" id="sidebar" aria-label="主导航">
+    <a class="brand" href="admin.html">
+      <span class="brand-mark">iK</span>
+      <span class="brand-copy">
+        <strong>授权管理后台</strong>
+        <small>License Admin</small>
+      </span>
+    </a>
+    <nav class="main-nav">
+      <a href="admin.html" data-path="/admin">
+        <span class="nav-icon">总</span><span>总览</span>
+      </a>
+      <a href="products.html" data-path="/products">
+        <span class="nav-icon">品</span><span>产品管理</span>
+      </a>
+      <a href="keys.html" data-path="/keys">
+        <span class="nav-icon">钥</span><span>授权 Key</span>
+      </a>
+      <a href="sessions.html" data-path="/sessions">
+        <span class="nav-icon">会</span><span>设备会话</span>
+      </a>
+      <a href="audit.html" data-path="/audit">
+        <span class="nav-icon">审</span><span>审计日志</span>
+      </a>
+      <a href="docs.html" class="active" data-path="/docs">
+        <span class="nav-icon">文</span><span>API 文档</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="session-card">
+        <span class="status-dot"></span>
+        <div>
+          <span>后台状态</span>
+          <strong>已连接</strong>
+        </div>
+      </div>
+      <a class="btn btn-ghost btn-block" href="login.html">退出登录</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div class="status-strip" aria-label="系统状态">
+        <span class="status-pill"><span class="status-dot"></span>系统运行中</span>
+        <span class="status-pill muted">RS256 签发</span>
+      </div>
+      <div class="topbar-user">
+        <span>当前用户</span>
+        <strong>admin</strong>
+      </div>
+    </header>
+
+    <section class="page-hero">
+      <div>
+        <span class="page-kicker">API Reference</span>
+        <h1>API 文档</h1>
+        <p>客户端 SDK 对接的授权验证接口说明，以及后台管理接口概览。</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <div>
+          <h2>客户端授权流程</h2>
+          <p>SDK 集成的标准交互链路。</p>
+        </div>
+      </div>
+      <div class="flow-steps">
+        <div class="flow-step"><span class="step-index">1</span>输入授权 Key</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step"><span class="step-index">2</span>请求激活接口</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step"><span class="step-index">3</span>获取 JWT</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step"><span class="step-index">4</span>本地验证签名</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step"><span class="step-index">5</span>心跳保活</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <div>
+          <h2>激活接口</h2>
+          <p>客户端发送授权 Key 到服务端验证并获取 JWT。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>项目</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>方法</strong></td>
+              <td><code>POST</code></td>
+            </tr>
+            <tr>
+              <td><strong>路径</strong></td>
+              <td><code>/api/v1/license/activate</code></td>
+            </tr>
+            <tr>
+              <td><strong>请求头</strong></td>
+              <td>
+                <code>Content-Type: application/json</code><br>
+                <code>X-Machine-Hash: &lt;设备唯一标识&gt;</code>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>请求体</strong></td>
+              <td>
+<pre style="margin:0;padding:12px;background:var(--surface-tint);border:1px solid var(--line);border-radius:10px;font-size:12px;overflow-x:auto;line-height:1.6">{
+  "license_key": "DEMO-7X2K-9MBQ-PF4R-W8TN",
+  "product_id": "desktop-client",
+  "sdk_version": "v2.4.1"
+}</pre>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>成功响应</strong></td>
+              <td>
+<pre style="margin:0;padding:12px;background:var(--success-soft);border:1px solid rgba(31,138,91,0.16);border-radius:10px;font-size:12px;overflow-x:auto;line-height:1.6">{
+  "access_token": "eyJhbGciOiJSUzI1NiIs...",
+  "token_type": "Bearer",
+  "expires_in": 2592000,
+  "jwt_expires_at": "2026-12-31T23:59:59+08:00"
+}</pre>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>错误响应</strong></td>
+              <td>
+<pre style="margin:0;padding:12px;background:var(--danger-soft);border:1px solid rgba(194,65,55,0.2);border-radius:10px;font-size:12px;overflow-x:auto;line-height:1.6">{
+  "detail": "授权 Key 不存在或已被禁用"
+}</pre>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <div>
+          <h2>心跳接口</h2>
+          <p>客户端定期调用以维持会话活跃。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>项目</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>方法</strong></td>
+              <td><code>POST</code></td>
+            </tr>
+            <tr>
+              <td><strong>路径</strong></td>
+              <td><code>/api/v1/license/heartbeat</code></td>
+            </tr>
+            <tr>
+              <td><strong>请求头</strong></td>
+              <td>
+                <code>Authorization: Bearer &lt;JWT token&gt;</code>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>成功响应</strong></td>
+              <td>
+<pre style="margin:0;padding:12px;background:var(--success-soft);border:1px solid rgba(31,138,91,0.16);border-radius:10px;font-size:12px;overflow-x:auto;line-height:1.6">{
+  "status": "ok",
+  "remaining_seconds": 86400
+}</pre>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>失败响应</strong></td>
+              <td>
+<pre style="margin:0;padding:12px;background:var(--danger-soft);border:1px solid rgba(194,65,55,0.2);border-radius:10px;font-size:12px;overflow-x:auto;line-height:1.6">{
+  "detail": "Token 已过期或无效"
+}</pre>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <div>
+          <h2>JWT 结构</h2>
+          <p>服务端签发的 JWT 包含以下声明字段。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>声明</th>
+              <th>类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>sub</code></td>
+              <td>string</td>
+              <td>授权 Key 的唯一 ID</td>
+            </tr>
+            <tr>
+              <td><code>aud</code></td>
+              <td>string</td>
+              <td>产品 Audience，客户端需匹配</td>
+            </tr>
+            <tr>
+              <td><code>machine_hash</code></td>
+              <td>string</td>
+              <td>设备指纹哈希</td>
+            </tr>
+            <tr>
+              <td><code>iat</code></td>
+              <td>number</td>
+              <td>签发时间戳</td>
+            </tr>
+            <tr>
+              <td><code>exp</code></td>
+              <td>number</td>
+              <td>过期时间戳</td>
+            </tr>
+            <tr>
+              <td><code>kid</code></td>
+              <td>string</td>
+              <td>使用的签名密钥 ID</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      var toggle = document.getElementById('menuToggle');
+      var sidebar = document.getElementById('sidebar');
+      var overlay = document.getElementById('overlay');
+      if (!toggle || !sidebar || !overlay) return;
+      function openNav() { sidebar.classList.add('open'); overlay.hidden = false; overlay.classList.add('show'); }
+      function closeNav() { sidebar.classList.remove('open'); overlay.classList.remove('show'); overlay.hidden = true; }
+      toggle.addEventListener('click', function() { sidebar.classList.contains('open') ? closeNav() : openNav(); });
+      overlay.addEventListener('click', closeNav);
+      window.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeNav(); });
+    })();
+  </script>
+</body>
+</html>

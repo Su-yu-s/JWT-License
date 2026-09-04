@@ -1,0 +1,47 @@
+# Build directories
+build/
+build-gui/
+install/
+dist/
+target/
+
+# DLLs and binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+*.lib
+*.a
+
+# IDE
+.idea/
+.vs/
+*.suo
+*.user
+*.sdf
+
+# Qt autogen
+*_autogen/
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# Windows
+Thumbs.db
+*.pdb
+*.exe
+*.dll
+*.lib
+*.obj
+*.o
+*.d
+
+# Logs
+*.log
+server.log
+
+# Temp
+*.tmp
+*.bak
+*~
